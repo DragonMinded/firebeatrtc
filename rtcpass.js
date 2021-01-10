@@ -240,8 +240,8 @@ BitArrayBuffer = function () {
 BitArrayBuffer.prototype._base_class = Object;
 BitArrayBuffer.prototype.__name__ = "BitArrayBuffer";
 
-BitArrayBuffer.prototype.__init__ = function (len) {
-    this.buffer = _pyfunc_op_mult([0], len);
+BitArrayBuffer.prototype.__init__ = function (length) {
+    this.buffer = _pyfunc_op_mult([0], length);
     return null;
 };
 
@@ -265,10 +265,10 @@ BitArrayBuffer.prototype.read = function (offset, bits) {
     return (_pyfunc_truthy(x))? (_pyfunc_sum(x)) : (0);
 };
 
-BitArrayBuffer.prototype.write = function (offset, bits, input) {
+BitArrayBuffer.prototype.write = function (offset, bits, to_write) {
     var i;
     for (i = 0; i < bits; i += 1) {
-        this.buffer[_pyfunc_op_add(offset, i)] = ((!_pyfunc_op_equals((input & (1 << i)), 0)))? (1) : (0);
+        this.buffer[_pyfunc_op_add(offset, i)] = ((!_pyfunc_op_equals((to_write & (1 << i)), 0)))? (1) : (0);
     }
     return null;
 };
@@ -306,15 +306,15 @@ KonamiRand.prototype.scramble = function () {
     return null;
 };
 
-KonamiRand.prototype.seed = function (input) {
+KonamiRand.prototype.seed = function (inval) {
     var i, offset, val;
-    this.buffer[this.buffer.length -2] = input & 4294967295;
+    this.buffer[this.buffer.length -2] = inval & 4294967295;
     val = 1;
     for (i = 1; i < 55; i += 1) {
         offset = _pyfunc_op_mult(i, 21) % 55;
         this.buffer[offset] = val;
-        val = this.get_safe_val(input - val);
-        input = this.buffer[offset];
+        val = this.get_safe_val(inval - val);
+        inval = this.buffer[offset];
     }
     this.scramble();
     this.scramble();
@@ -333,11 +333,11 @@ KonamiRand.prototype.next = function () {
 };
 
 
-base36encode = function flx_base36encode (val, len, alphabet) {
+base36encode = function flx_base36encode (val, length, alphabet) {
     var _, i, output, stub2_;
     alphabet = (alphabet === undefined) ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789": alphabet;
     output = "";
-    for (_ = 0; _ < len; _ += 1) {
+    for (_ = 0; _ < length; _ += 1) {
         stub2_ = _pyfunc_divmod(val, 36);
         val = stub2_[0];i = stub2_[1];
         output = _pyfunc_op_add(output, alphabet[i]);
@@ -363,30 +363,30 @@ verify_date = function flx_verify_date (date) {
     return (date < 991232) && ((((date / 100) % 100) < 13)) && (((date % 100) < 32));
 };
 
-decode_firebeat_recovery_password = function flx_decode_firebeat_recovery_password (input) {
+decode_firebeat_recovery_password = function flx_decode_firebeat_recovery_password (inval) {
     var buffer_to_str, checksum, checksum_base, date_num, internal_sum, is_valid, keycode_num, krand, output_buffer, output_str, seed, serial_num, xor_buffer;
-    buffer_to_str = (function flx_buffer_to_str (buffer) {
+    buffer_to_str = (function flx_buffer_to_str (buf) {
         var i, parts, v;
         parts = [];
         for (i = 0; i < 70; i += 10) {
-            v = buffer.read(i, 10);
+            v = buf.read(i, 10);
             _pymeth_append.call(parts, (Math.floor(v/100) % 10));
             _pymeth_append.call(parts, (Math.floor(v/10) % 10));
             _pymeth_append.call(parts, (v % 10));
         }
-        v = buffer.read(70, 7);
+        v = buf.read(70, 7);
         _pymeth_append.call(parts, (Math.floor(v/10) % 10));
         _pymeth_append.call(parts, (v % 10));
         return _pymeth_join.call("", ((function list_comprehension (iter0) {var res = [];var c, i0;if ((typeof iter0 === "object") && (!Array.isArray(iter0))) {iter0 = Object.keys(iter0);}for (i0=0; i0<iter0.length; i0++) {c = iter0[i0];{res.push(_pyfunc_str(c));}}return res;}).call(this, parts)));
     }).bind(this);
 
-    input = _pymeth_replace.call(input, "-", "");
+    inval = _pymeth_replace.call(inval, "-", "");
     krand = new KonamiRand();
     output_buffer = new BitArrayBuffer(112);
-    output_buffer.write(0, 31, base36decode(input.slice(0,6)));
-    output_buffer.write(31, 31, base36decode(input.slice(6,12)));
-    output_buffer.write(62, 31, base36decode(input.slice(12,18)));
-    output_buffer.write(93, 10, base36decode(input.slice(18)));
+    output_buffer.write(0, 31, base36decode(inval.slice(0,6)));
+    output_buffer.write(31, 31, base36decode(inval.slice(6,12)));
+    output_buffer.write(62, 31, base36decode(inval.slice(12,18)));
+    output_buffer.write(93, 10, base36decode(inval.slice(18)));
     seed = output_buffer.read(93, 10);
     checksum_base = output_buffer.read(77, 16);
     krand.seed(_pyfunc_op_mult(seed, 3) + 112);
@@ -403,7 +403,7 @@ decode_firebeat_recovery_password = function flx_decode_firebeat_recovery_passwo
     keycode_num = output_str.slice(9,17);
     date_num = output_str.slice(17);
     is_valid = _pyfunc_op_equals(checksum, internal_sum) && (serial_num.length == 9) && (keycode_num.length == 8) && (date_num.length == 6) && (_pyfunc_truthy(verify_date(_pyfunc_int(date_num))));
-    return ({password: input, decoded: output_str, serial: serial_num, keycode: keycode_num, date: date_num, is_valid: is_valid});
+    return ({password: inval, decoded: output_str, serial: serial_num, keycode: keycode_num, date: date_num, is_valid: is_valid});
 };
 
 encode_firebeat_recovery_password = function flx_encode_firebeat_recovery_password (serial, keycode, date, seed, verify_password) {
@@ -419,19 +419,17 @@ encode_firebeat_recovery_password = function flx_encode_firebeat_recovery_passwo
         return _pymeth_join.call("", [snum, nnum, dnum]);
     }).bind(this);
 
-    str_to_buffer = (function flx_str_to_buffer (input) {
+    str_to_buffer = (function flx_str_to_buffer (inval) {
         var i, output_buffer;
         output_buffer = new BitArrayBuffer(112);
-        for (i = 0; i < Math.floor(input.length/3); i += 1) {
-            output_buffer.write(_pyfunc_op_mult(i, 10), 10, _pyfunc_int((input.slice(_pyfunc_op_mult(i, 3),_pyfunc_op_mult(i, 3) + 3))));
+        for (i = 0; i < Math.floor(inval.length/3); i += 1) {
+            output_buffer.write(_pyfunc_op_mult(i, 10), 10, _pyfunc_int((inval.slice(_pyfunc_op_mult(i, 3),_pyfunc_op_mult(i, 3) + 3))));
         }
-        i = Math.floor(input.length/3);
-        output_buffer.write(70, 7, _pyfunc_int((input.slice(_pyfunc_op_mult(i, 3),_pyfunc_op_mult(i, 3) + 3))));
+        i = Math.floor(inval.length/3);
+        output_buffer.write(70, 7, _pyfunc_int((inval.slice(_pyfunc_op_mult(i, 3),_pyfunc_op_mult(i, 3) + 3))));
         return output_buffer;
     }).bind(this);
 
-    date = _pyfunc_int(date);
-    seed = _pyfunc_int(seed);
     k = generate_key(serial, keycode, date);
     output_buffer = str_to_buffer(k);
     internal_sum = (_pyfunc_sum([output_buffer.read(0, 12), output_buffer.read(12, 12), output_buffer.read(24, 12), output_buffer.read(36, 12), output_buffer.read(48, 12), output_buffer.read(60, 12), output_buffer.read(72, 5)])) & 65535;

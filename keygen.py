@@ -2,12 +2,13 @@ import argparse
 import datetime
 import random
 import sys
+from typing import Callable
 
 import rtcpass
 
 
-def seed_checker(minval, maxval):
-    def seed_range_checker(arg):
+def seed_checker(minval: int, maxval: int) -> Callable[[str], int]:
+    def seed_range_checker(arg: str) -> int:
         try:
             f = int(arg)
 
@@ -15,14 +16,14 @@ def seed_checker(minval, maxval):
             raise argparse.ArgumentTypeError("must be an integer")
 
         if f < minval or f > maxval:
-            raise argparse.ArgumentTypeError("must be in range [" + str(minval) + " .. " + str(maxval)+"]")
+            raise argparse.ArgumentTypeError("must be in range [" + str(minval) + " .. " + str(maxval) + "]")
 
         return f
 
     return seed_range_checker
 
 
-def date_checker(val):
+def date_checker(val: str) -> int:
     try:
         f = int(val)
 
@@ -34,7 +35,8 @@ def date_checker(val):
 
     return f
 
-def get_current_date():
+
+def get_current_date() -> int:
     now = datetime.datetime.now()
     date = "%02d%02d%02d" % ((now.year % 100), now.month, now.day)
     return int(date)
